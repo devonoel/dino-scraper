@@ -2,7 +2,7 @@ const Nightmare = require('nightmare');
 const nm = Nightmare({show: true});
 const baseUrl = 'http://www.nhm.ac.uk';
 
-nm.goto(baseUrl + '/discover/dino-directory/name/name-az-all.html')
+nm.goto(`${baseUrl}/discover/dino-directory/name/name-az-all.html`)
   .evaluate(function() {
     let results = [];
     let dinoLinks = document.querySelectorAll('.dino-list a');
@@ -36,7 +36,20 @@ function crawl(urls) {
 }
 
 function scrape() {
-  return document.querySelector('.dino-facts dd').innerText;
+  let result = {};
+  let keys = document.querySelectorAll('.dino-facts dt');
+  let values = document.querySelectorAll('.dino-facts dd');
+
+  for (let i=0; i<keys.length; i++) {
+    let words = keys[i].innerText.split(' ')
+    let k = words.map(function(w, i) {
+      return i === 0 ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1);
+    }).join('');
+
+    result[k] = values[i].innerText;
+  }
+
+  return result;
 }
 
 function bail(err) {
