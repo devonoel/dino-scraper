@@ -1,6 +1,7 @@
 const Nightmare = require('nightmare');
 const nm = Nightmare({show: true});
 const baseUrl = 'http://www.nhm.ac.uk';
+let acc = [];
 
 nm.goto(`${baseUrl}/discover/dino-directory/name/name-az-all.html`)
   .evaluate(function() {
@@ -18,38 +19,43 @@ nm.goto(`${baseUrl}/discover/dino-directory/name/name-az-all.html`)
 function crawl(urls) {
   if (urls.length < 2) {
     nm.goto(baseUrl + urls.pop())
-      .evaluate(scrape)
+      .evaluate(scrape, acc)
       .end()
       .then(function(result) {
-        console.log(result);
+        acc = result;
+        let dinos = { dinosaurs: acc };
+        console.log(dinos);
       })
       .catch(bail);
   } else {
     nm.goto(baseUrl + urls.pop())
-      .evaluate(scrape)
+      .evaluate(scrape, acc)
       .then(function(result) {
-        console.log(result);
+        acc = result;
         crawl(urls);
       })
       .catch(bail);
   }
 }
 
-function scrape() {
+function scrape(acc) {
   let result = {};
   let keys = document.querySelectorAll('.dino-facts dt');
   let values = document.querySelectorAll('.dino-facts dd');
 
   for (let i=0; i<keys.length; i++) {
-    let words = keys[i].innerText.split(' ')
-    let k = words.map(function(w, i) {
-      return i === 0 ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1);
-    }).join('');
+    let words = keys[i].innerText.trim().split(' ')
+    let key = words.map(function(w, i) {
+      return w.toLowerCase();
+    }).join('_');
 
-    result[k] = values[i].innerText;
+    result[key] = values[i].innerText.trim();
   }
 
-  return result;
+  result["name"] = document.querySelector('#dino-intro h2').innerText;
+
+  acc.push(result);
+  return acc;
 }
 
 function bail(err) {
