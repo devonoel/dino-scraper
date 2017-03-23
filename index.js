@@ -1,3 +1,4 @@
+const fs = require('fs');
 const Nightmare = require('nightmare');
 const nm = Nightmare({show: true});
 const baseUrl = 'http://www.nhm.ac.uk';
@@ -8,8 +9,7 @@ nm.goto(`${baseUrl}/discover/dino-directory/name/name-az-all.html`)
     let results = [];
     let dinoLinks = document.querySelectorAll('.dino-list a');
 
-    // for(let i=0; i < dinoLinks.length; i++) {
-    for(let i=0; i < 5; i++) {
+    for(let i=0; i < dinoLinks.length; i++) {
       results.push(dinoLinks[i].getAttribute('href'));
     }
 
@@ -24,7 +24,8 @@ function crawl(urls) {
       .then(function(result) {
         acc = result;
         let dinos = { dinosaurs: acc };
-        console.log(dinos);
+        fs.writeFileSync('results/dinos.json', JSON.stringify(dinos), 'utf8');
+        console.log(`Finished scraping ${acc.length} dinos to results/dinos.json`);
       })
       .catch(bail);
   } else {
@@ -52,7 +53,7 @@ function scrape(acc) {
     result[key] = values[i].innerText.trim();
   }
 
-  result["name"] = document.querySelector('#dino-intro h2').innerText;
+  result['name'] = document.querySelector('#dino-intro h2').innerText;
 
   acc.push(result);
   return acc;
